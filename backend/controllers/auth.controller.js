@@ -137,6 +137,29 @@ export const getEmployerById = async (req, res) => {
 	  res.status(500).json({ success: false, message: "Errore durante l'eliminazione dell'employer" });
 	}
   };
+
+  // auth.controller.js
+
+	export const updateEmail = async (req, res) => {
+	const { email } = req.body;
+	const userId = req.user.id; // Presupponendo che l'utente sia autenticato
+  
+	try {
+	  const user = await User.findById(userId);
+	  if (!user) {
+		return res.status(404).json({ message: "Utente non trovato" });
+	  }
+  
+	  user.email = email;
+	  await user.save();
+  
+	  res.status(200).json({ message: "Email aggiornata con successo" });
+	} catch (error) {
+	  console.error(error);
+	  res.status(500).json({ message: "Errore nell'aggiornamento dell'email" });
+	}
+  };
+  
   
   // Aggiorna la password dell'employer
   export const updateEmployerPassword = async (req, res) => {
@@ -378,22 +401,25 @@ export const getTimetableForMonth = async (req, res) => {
   
   // Aggiungi giustificativo (malattia, ferie, ecc.)
   export const addJustification = async (req, res) => {
-	const { dayId, justificationType, employerId } = req.body;
-  
+	const { dayId, justificationType, reason, employerId } = req.body;
+	
 	try {
+	  // Crea un nuovo giustificativo
 	  const justification = new Justification({
 		day: dayId,
 		employer: employerId,
-		type: justificationType
+		type: justificationType,
+		reason,
 	  });
+  
 	  await justification.save();
-	  res.status(201).json({ success: true, message: 'Giustificativo aggiunto' });
+  
+	  res.status(201).json({ success: true, message: 'Giustificativo salvato con successo' });
 	} catch (error) {
-	  console.error("Errore nell'aggiunta del giustificativo:", error);
-	  res.status(500).json({ success: false, message: 'Errore del server' });
+	  console.error("Errore durante il salvataggio del giustificativo:", error);
+	  res.status(500).json({ message: 'Errore durante il salvataggio del giustificativo' });
 	}
   };
-  
   // Assegna un progetto a un giorno specifico
   export const assignProjectToDay = async (req, res) => {
 	const { dayId, projectId, employerIds } = req.body;

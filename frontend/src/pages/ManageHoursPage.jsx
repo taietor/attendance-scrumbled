@@ -16,19 +16,23 @@ import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import axios from "axios"; // Importa axios per le chiamate API
+import { useAuthStore } from "../store/authStore"; // Per prendere nome e cognome dell'employer
 
-const TimetablePage = () => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date()); // Data selezionata
-  const [weeks, setWeeks] = useState([]); // Settimane dinamiche del mese
-  const [selectedWeek, setSelectedWeek] = useState(0); // Settimana selezionata
+const ManageHoursPage = () => {
+  const { user } = useAuthStore();
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [weeks, setWeeks] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState(0);
+  const [justifications, setJustifications] = useState({}); // Stato per giustificativi
   const [workDays, setWorkDays] = useState({}); // Giorni lavorativi
+  const [isJustificationModalOpen, setIsJustificationModalOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null); // Giorno selezionato
+  const [justificationType, setJustificationType] = useState(""); // Tipo di giustificativo
+  const [justificationReason, setJustificationReason] = useState(""); // Motivazione
   const [projects, setProjects] = useState({}); // Progetti
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false); // Modale aperto/chiuso
-  const [selectedDay, setSelectedDay] = useState(null); // Giorno selezionato per il progetto
-  const [projectTitle, setProjectTitle] = useState(""); // Titolo del progetto
-  const [projectDescription, setProjectDescription] = useState(""); // Descrizione del progetto
-  const [selectedEmployers, setSelectedEmployers] = useState([]); // Employers aggiunti al progetto
-  const [employers, setEmployers] = useState([]); // Lista degli employers
+
+
 
   const navigate = useNavigate();
 
@@ -38,7 +42,6 @@ const TimetablePage = () => {
     let currentDate = new Date(year, month, 1); // Primo giorno del mese
 
     const firstDayOfWeek = currentDate.getDay();
-
     let week = new Array(firstDayOfWeek).fill(null);
 
     while (currentDate.getMonth() === month) {
@@ -65,87 +68,37 @@ const TimetablePage = () => {
     const year = selectedMonth.getFullYear();
     const weeks = calculateWeeks(month, year);
     setWeeks(weeks);
-
-    // Recupera la lista di employers dal backend
-    const fetchEmployers = async () => {
-      try {
-        const response = await axios.get("/api/auth/get-employers");
-        setEmployers(response.data.employers);
-      } catch (error) {
-        console.error("Errore nel recupero degli employers:", error);
-      }
-    };
-
-    fetchEmployers();
   }, [selectedMonth]);
 
   const handleWeekSelection = (index) => {
     setSelectedWeek(index);
   };
-
-  const toggleWorkDay = (day) => {
-    if (!day) return; // Se non è un giorno valido, esci dalla funzione
-
-    const dayString = day.toDateString(); // Trasforma il giorno in stringa
-
-    // Aggiorna lo stato workDays
-    setWorkDays((prevWorkDays) => ({
-      ...prevWorkDays,
-      [dayString]: !prevWorkDays[dayString], // Alterna il valore del giorno
-    }));
-  };
-
   const toggleProjectModal = (day) => {
     setSelectedDay(day);
     setIsProjectModalOpen(true);
   };
 
-  const handleSaveProject = async () => {
-    if (!projectTitle || !selectedDay) return;
-
-    try {
-      // Salva il progetto nel backend
-      const response = await axios.post("/api/projects", {
-        title: projectTitle,
-        description: projectDescription,
-        employers: selectedEmployers.map((emp) => emp._id),
-        date: selectedDay, // Salva la data del progetto
-      });
-
-      // Aggiorna lo stato frontend con i dati del progetto salvato
-      setProjects((prevProjects) => ({
-        ...prevProjects,
-        [selectedDay.toDateString()]: {
-          title: response.data.project.title,
-          description: response.data.project.description,
-          employers: response.data.project.employers,
-        },
-      }));
-
-      // Chiudi il modale
-      setIsProjectModalOpen(false);
-      setProjectTitle("");
-      setProjectDescription("");
-      setSelectedEmployers([]);
-    } catch (error) {
-      console.error("Errore nel salvataggio del progetto:", error);
-    }
+  const toggleJustificationModal = (day, type) => {
+    setSelectedDay(day);
+    setJustificationType(type);
+    setIsJustificationModalOpen(true);
   };
 
-  const handleCancelProject = () => {
-    setIsProjectModalOpen(false);
-    setProjectTitle("");
-    setProjectDescription("");
-    setSelectedEmployers([]);
-  };
-  
+  const handleSaveJustification = () => {
+    if (!justificationReason || !selectedDay) return;
 
-  const handleEmployerCheckboxChange = (employerId) => {
-    setSelectedEmployers((prevSelected) =>
-      prevSelected.includes(employerId)
-        ? prevSelected.filter((id) => id !== employerId)
-        : [...prevSelected, employerId]
-    );
+    const dayKey = selectedDay.toDateString();
+    setJustifications((prevJustifications) => ({
+      ...prevJustifications,
+      [dayKey]: {
+        type: justificationType,
+        reason: justificationReason.slice(0, 5), // Mostra solo le prime 5 lettere
+      },
+    }));
+
+    // Chiudi il modale
+    setIsJustificationModalOpen(false);
+    setJustificationReason("");
   };
 
   // Array dei giorni della settimana per visualizzarli sopra le caselle
@@ -160,7 +113,7 @@ const TimetablePage = () => {
     >
       {/* Header del Calendario */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-purple-900">Tabelle Orarie</h2>
+        <h2 className="text-2xl font-bold text-purple-900">Gestisci le tue ore</h2>
         <button
           onClick={() => setSelectedMonth(new Date())}
           className="bg-purple-500 p-2 rounded-lg text-white"
@@ -199,10 +152,13 @@ const TimetablePage = () => {
         </button>
       </div>
 
-      {/* Giorni della settimana sopra le caselle */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+ {/* Giorni della settimana sopra le caselle */}
+ <div className="grid grid-cols-7 gap-2 mb-2">
         {daysOfWeek.map((day, index) => (
-          <div key={index} className="text-center font-semibold text-purple-800">
+          <div
+            key={index}
+            className="text-center font-semibold text-purple-800"
+          >
             {day}
           </div>
         ))}
@@ -215,7 +171,7 @@ const TimetablePage = () => {
             {/* Casella quadrata per giorno */}
             <div
               className={`p-2 bg-transparent border-4 ${
-                !day || day.getDay() === 0
+                !day || day.getDay() === 0 // Domenica o giorno nullo
                   ? "border-gray-500 cursor-not-allowed"
                   : workDays[day?.toDateString()]
                   ? "border-green-500"
@@ -248,17 +204,23 @@ const TimetablePage = () => {
         ))}
       </div>
 
-{/* Giustificativi */}
-<div className="mb-6">
+      {/* Giustificativi */}
+      <div className="mb-6">
         <h3 className="text-lg font-bold text-purple-900 mb-2">Giustificativi</h3>
+        
         <div className="text-md font-semibold text-purple-700 mb-2">Malattia</div>
         <div className="grid grid-cols-7 gap-2 mb-2">
           {weeks[selectedWeek]?.map((day, index) => (
             <div
               key={index}
               className="p-2 bg-transparent border-2 border-gray-400 rounded-lg h-12 w-12 flex justify-center items-center cursor-pointer"
+              onClick={() => day && toggleJustificationModal(day, "Malattia")}
             >
-              {day ? <Plus size={16} /> : null}
+              {day && justifications[day?.toDateString()]?.type === "Malattia" ? (
+                <span className="text-xs">{justifications[day.toDateString()].reason}</span>
+              ) : (
+                <Plus size={16} />
+              )}
             </div>
           ))}
         </div>
@@ -269,8 +231,13 @@ const TimetablePage = () => {
             <div
               key={index}
               className="p-2 bg-transparent border-2 border-gray-400 rounded-lg h-12 w-12 flex justify-center items-center cursor-pointer"
+              onClick={() => day && toggleJustificationModal(day, "Ferie")}
             >
-              {day ? <Plus size={16} /> : null}
+              {day && justifications[day?.toDateString()]?.type === "Ferie" ? (
+                <span className="text-xs">{justifications[day.toDateString()].reason}</span>
+              ) : (
+                <Plus size={16} />
+              )}
             </div>
           ))}
         </div>
@@ -281,15 +248,21 @@ const TimetablePage = () => {
             <div
               key={index}
               className="p-2 bg-transparent border-2 border-gray-400 rounded-lg h-12 w-12 flex justify-center items-center cursor-pointer"
+              onClick={() => day && toggleJustificationModal(day, "Permessi")}
             >
-              {day ? <Plus size={16} /> : null}
+              {day && justifications[day?.toDateString()]?.type === "Permessi" ? (
+                <span className="text-xs">{justifications[day.toDateString()].reason}</span>
+              ) : (
+                <Plus size={16} />
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Progetti */}
-      <div className="mb-6">
+
+{/* Progetti */}
+<div className="mb-6">
         <h3 className="text-lg font-bold text-purple-900 mb-2">Progetti</h3>
         <div className="grid grid-cols-7 gap-2">
           {weeks[selectedWeek]?.map((day, index) => (
@@ -314,54 +287,30 @@ const TimetablePage = () => {
         </div>
       </div>
 
-      {/* Modale per aggiungere il progetto */}
-      {isProjectModalOpen && (
+      {/* Modale per inserire un giustificativo */}
+      {isJustificationModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Nuovo Progetto</h3>
-            <input
-              type="text"
-              className="w-full mb-4 p-2 border border-gray-300 rounded-lg"
-              placeholder="Titolo del progetto"
-              value={projectTitle}
-              onChange={(e) => setProjectTitle(e.target.value)}
-            />
+            <h3 className="text-lg font-bold mb-4">Inserisci Giustificativo</h3>
+            <p className="mb-4">Nome: {user.name}</p>
+            <p className="mb-4">Cognome: {user.surname}</p>
             <textarea
               className="w-full mb-4 p-2 border border-gray-300 rounded-lg"
-              placeholder="Descrizione del progetto"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
+              placeholder="Inserisci la motivazione"
+              value={justificationReason}
+              onChange={(e) => setJustificationReason(e.target.value)}
             />
-
-            <h4 className="text-md font-semibold mb-2">Aggiungi Employers</h4>
-            <div className="mb-4">
-              {employers.map((employer) => (
-                <div
-                  key={employer._id}
-                  className="flex justify-between items-center mb-2"
-                >
-                  <span>{employer.name}</span>
-                  <input
-                    type="checkbox"
-                    onChange={() =>
-                      handleEmployerCheckboxChange(employer._id)
-                    }
-                    checked={selectedEmployers.includes(employer._id)}
-                  />
-                </div>
-              ))}
-            </div>
 
             <div className="flex justify-end space-x-4">
               <button
                 className="bg-red-500 text-white px-4 py-2 rounded-lg"
-                onClick={handleCancelProject}
+                onClick={() => setIsJustificationModalOpen(false)}
               >
                 Cancella
               </button>
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg"
-                onClick={handleSaveProject}
+                onClick={handleSaveJustification}
               >
                 Salva
               </button>
@@ -374,14 +323,14 @@ const TimetablePage = () => {
       <div className="mt-6">
         <div className="flex justify-between bg-purple-300 p-4 rounded-lg shadow-md">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/employer-dashboard")}
             className="flex flex-col items-center"
           >
             <Home size={24} className="text-purple-600" />
             <span className="text-sm text-purple-700">Home</span>
           </button>
           <button
-            onClick={() => navigate("/anagrafiche")}
+            onClick={() => navigate("/manage-employer-data")}
             className="flex flex-col items-center"
           >
             <User size={24} className="text-purple-600" />
@@ -395,7 +344,7 @@ const TimetablePage = () => {
             <span className="text-sm text-purple-700">Orari</span>
           </button>
           <button
-            onClick={() => navigate("/settings")}
+            onClick={() => navigate("/employer-settings")}
             className="flex flex-col items-center"
           >
             <Settings size={24} className="text-purple-600" />
@@ -407,4 +356,4 @@ const TimetablePage = () => {
   );
 };
 
-export default TimetablePage;
+export default ManageHoursPage;

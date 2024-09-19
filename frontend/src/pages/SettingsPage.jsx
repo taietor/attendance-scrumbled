@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit } from "lucide-react";
+import { Edit, Home, User, Calendar, Settings } from "lucide-react"; // Importa le icone necessarie
 import { Link } from "react-router-dom";
 
 const SettingsPage = () => {
@@ -10,44 +10,69 @@ const SettingsPage = () => {
       transition={{ duration: 0.5 }}
       className="max-w-md w-full mx-auto mt-10 p-8 bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl border border-gray-800"
     >
-      <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text">
+      <h2 className="text-3xl font-bold mb-6 text-center text-white">
         Impostazioni
       </h2>
 
       {/* Modifica Password */}
       <Link to="/change-password">
         <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           className="flex justify-between items-center mb-4 py-3 px-4 bg-purple-500 text-white rounded-full shadow-lg"
         >
-          <span>Modifica Password</span>
-          <Edit size={20} className="text-white" />
+          <span className="text-lg font-medium">Modifica Password</span>
+          <Edit size={24} className="text-white" />
         </motion.div>
       </Link>
 
       {/* Altre Impostazioni */}
       <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="flex justify-between items-center py-3 px-4 bg-purple-500 text-white rounded-full shadow-lg"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex justify-between items-center py-3 px-4 bg-purple-500 text-white rounded-full shadow-lg mb-6"
       >
-        <span>Altre impostazioni</span>
-        <Edit size={20} className="text-white" />
+        <span className="text-lg font-medium">Altre Impostazioni</span>
+        <Edit size={24} className="text-white" />
       </motion.div>
 
-      {/* Navigazione in basso */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900 p-4">
+      {/* Barra di Navigazione all'interno */}
+      <div className="mt-6 p-4 rounded-lg shadow-md bg-gray-900">
         <div className="flex justify-around">
-          {/* Icone di navigazione */}
           <Link to="/">
-            <motion.div whileHover={{ scale: 1.1 }}>
-              <i className="home-icon text-purple-400" size={32} />
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center"
+            >
+              <Home size={28} className="text-white" />
+              <span className="text-sm text-white">Home</span>
+            </motion.div>
+          </Link>
+          <Link to="/anagrafiche">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center"
+            >
+              <User size={28} className="text-white" />
+              <span className="text-sm text-white">Anagrafiche</span>
+            </motion.div>
+          </Link>
+          <Link to="/timetable">
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center"
+            >
+              <Calendar size={28} className="text-white" />
+              <span className="text-sm text-white">Orari</span>
             </motion.div>
           </Link>
           <Link to="/settings">
-            <motion.div whileHover={{ scale: 1.1 }}>
-              <i className="settings-icon text-purple-400" size={32} />
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              className="flex flex-col items-center"
+            >
+              <Settings size={28} className="text-white" />
+              <span className="text-sm text-white">Impostazioni</span>
             </motion.div>
           </Link>
         </div>

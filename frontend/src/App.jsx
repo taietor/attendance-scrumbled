@@ -20,6 +20,9 @@ import { useEffect } from "react";
 import AnagrafichePage from "./pages/AnagrafichePage";
 import EmployerDetailsPage from "./pages/EmployerDetailsPage";
 import TimetablePage from "./pages/TimetablePage";
+import ManageEmployerDataPage from "./pages/ManageEmployerData";
+import EmployerSettingsPage from "./pages/EmployerSettingsPage";
+import ManageHoursPage from "./pages/ManageHoursPage";
 
 // Protezione delle rotte che richiedono autenticazione
 const ProtectedRoute = ({ children }) => {
@@ -134,6 +137,30 @@ function App() {
           element={
             <EmployerProtectedRoute>
               <EmployerDashboardPage />
+            </EmployerProtectedRoute>
+          }
+        />
+        <Route
+          path="/manage-employer-data"
+          element={
+            <EmployerProtectedRoute>
+              <ManageEmployerDataPage />
+            </EmployerProtectedRoute>
+          }
+        />
+         <Route
+          path="/manage-hours"
+          element={
+            <EmployerProtectedRoute>
+              <ManageHoursPage />
+            </EmployerProtectedRoute>
+          }
+        />
+        <Route
+          path="/employer-settings"
+          element={
+            <EmployerProtectedRoute>
+              <EmployerSettingsPage />
             </EmployerProtectedRoute>
           }
         />

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Home, User, Calendar, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+
 
 const AnagrafichePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -9,6 +11,8 @@ const AnagrafichePage = () => {
   const [employers, setEmployers] = useState([]);
   const [selectedEmployer, setSelectedEmployer] = useState(null); // Stato per gestire l'employer selezionato
   const navigate = useNavigate();
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+
 
   // Funzione per ottenere tutti gli employer dal database
   useEffect(() => {
@@ -136,49 +140,84 @@ const AnagrafichePage = () => {
 
       {/* Sezione dei dettagli dell'employer */}
       {selectedEmployer && (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    className="mt-8 p-6 bg-white rounded-lg shadow-lg"
+  >
+    {/* Dati dell'employer */}
+    <h2 className="text-2xl font-bold mb-4 text-purple-900 text-center">
+      {selectedEmployer.name} {selectedEmployer.surname}
+    </h2>
+    <p className="text-center">Email: {selectedEmployer.email}</p>
+    <p className="text-center">ID: {selectedEmployer._id}</p>
+
+    {/* Altri dati (Mese e Anno selezionabili) */}
+    <div className="mb-6">
+      <p className="font-semibold text-gray-600 text-center">Altri dati:</p>
+      <DatePicker
+        selected={selectedMonth}
+        onChange={(date) => setSelectedMonth(date)}
+        dateFormat="MM/yyyy"
+        showMonthYearPicker
+        className="w-full py-2 px-4 border border-purple-300 rounded-lg shadow-sm focus:ring focus:ring-purple-300 transition"
+      />
+    </div>
+
+    {/* Sezione cerchi migliorata */}
+    <div className="grid grid-cols-3 gap-4 text-center mb-8">
+      {[
+        { label: "Work Days", value: 16, color: "bg-blue-100", borderColor: "border-blue-400" },
+        { label: "Malattie", value: 2, color: "bg-red-100", borderColor: "border-red-400" },
+        { label: "Ferie", value: 3, color: "bg-yellow-100", borderColor: "border-yellow-400" }
+      ].map((circle, index) => (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="mt-8 p-6 bg-white rounded-lg shadow-lg"
+          key={index}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: index * 0.2, duration: 0.5 }}
+          className="flex flex-col items-center justify-center"
         >
-          <h2 className="text-2xl font-bold mb-4 text-purple-900 text-center">
-            {selectedEmployer.name} {selectedEmployer.surname}
-          </h2>
-          <p className="text-center">Email: {selectedEmployer.email}</p>
-          <p className="text-center">ID: {selectedEmployer._id}</p>
-
-          {/* Pulsante per eliminare l'employer */}
-          <motion.button
-            onClick={handleDelete}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 mt-4 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600"
-          >
-            Elimina profilo
-          </motion.button>
-
-          {/* Pulsante per modificare la password */}
-          <motion.button
-            onClick={handleEditPassword}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 mt-4 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600"
-          >
-            Modifica password
-          </motion.button>
-
-          {/* Pulsante per chiudere i dettagli */}
-          <motion.button
-            onClick={() => setSelectedEmployer(null)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 mt-4 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600"
-          >
-            Esci
-          </motion.button>
+          <span className="font-bold text-lg text-gray-700 mb-2">{circle.label}</span>
+          <div className={`relative flex items-center justify-center rounded-full w-24 h-24 mx-auto border-4 ${circle.borderColor} ${circle.color} shadow-lg`}>
+            <span className="text-2xl font-bold text-gray-800">{circle.value}</span>
+          </div>
         </motion.div>
-      )}
+      ))}
+    </div>
+
+    {/* Pulsanti in una riga */}
+    <div className="flex justify-between">
+      <motion.button
+        onClick={handleDelete}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="py-2 px-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 text-sm"
+      >
+        Elimina profilo
+      </motion.button>
+
+      <motion.button
+        onClick={handleEditPassword}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="py-2 px-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 text-sm"
+      >
+        Modifica password
+      </motion.button>
+
+      <motion.button
+        onClick={() => setSelectedEmployer(null)}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="py-2 px-3 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 text-sm"
+      >
+        Esci
+      </motion.button>
+    </div>
+  </motion.div>
+)}
 
       {/* Barra di navigazione */}
       <div className="mt-8">

@@ -20,6 +20,7 @@ import {
   getProjectsForMonth,
   createProject,
   getProjects,
+  updateEmail
 } from '../controllers/auth.controller.js';
 import { verifyToken } from '../middleware/verifyToken.js';
 import { Employer } from '../models/employer.model.js';
@@ -98,6 +99,26 @@ router.delete('/employer/:id', async (req, res) => {
 	}
   });
 
+  router.post('/employer/update-email', verifyToken, async (req, res) => {
+    const { email } = req.body;
+    const userId = req.user.id; // Presupponendo che l'utente sia autenticato
+
+    try {
+        const employer = await Employer.findById(userId);
+        if (!employer) {
+            return res.status(404).json({ success: false, message: "Employer non trovato" });
+        }
+
+        employer.email = email;
+        await employer.save();
+
+        res.status(200).json({ success: true, message: "Email aggiornata con successo" });
+    } catch (error) {
+        console.error("Errore nell'aggiornamento dell'email:", error);
+        res.status(500).json({ success: false, message: "Errore nell'aggiornamento dell'email" });
+    }
+});
+
 // Recupera l'orario per un determinato mese
 router.get('/timetable/:month/:year', verifyToken, getTimetableForMonth);
 
@@ -113,6 +134,8 @@ router.post('/timetable/project', verifyToken, assignProjectToDay);
 // Recupera i progetti per un mese specifico
 router.get('/timetable/projects/:month/:year', verifyToken, getProjectsForMonth);
 
+
+router.post('/employer/update-email', verifyToken, updateEmail);
 
 
 
@@ -136,6 +159,7 @@ router.patch('/employer/:id/password', verifyToken, updateEmployerPassword);  //
 
 router.post('/projects', verifyToken, createProject);  // Rotta per creare un progetto
 router.get('/projects', verifyToken, getProjects);
+router.post('/justifications', addJustification);  // Funzione nel controller per aggiungere un giustificativo
 
 
 export default router;
