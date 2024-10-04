@@ -27,9 +27,9 @@ const EmployerLoginPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden"
+      className="w-full md:max-w-md mx-auto bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl md:rounded-2xl shadow-xl overflow-hidden min-h-screen md:min-h-0 flex flex-col"
     >
-      <div className="p-8">
+      <div className="p-8 md:py-4 flex-grow flex flex-col justify-center">
         <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-purple-400 to-purple-600 text-transparent bg-clip-text">
           Login Employer
         </h2>
@@ -76,6 +76,8 @@ const EmployerLoginPage = () => {
           </motion.button>
         </form>
       </div>
+
+      {/* Footer */}
       <div className="px-8 py-4 bg-gray-900 bg-opacity-50 flex justify-center">
         <p className="text-sm text-gray-400">
           Torna alla pagina di login principale?{" "}

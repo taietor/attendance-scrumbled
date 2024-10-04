@@ -17,58 +17,59 @@ const EmployerDashboardPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md w-full mx-auto mt-10 p-8 bg-purple-100 rounded-xl shadow-2xl"
+      className="w-full md:max-w-md mx-auto bg-purple-100 rounded-xl shadow-2xl min-h-screen md:min-h-0 flex flex-col"
     >
-      {/* Header */}
-      <h2 className="text-2xl font-bold mb-6 text-center text-purple-900">
-        Benvenuto, {user?.name}!
-      </h2>
+      {/* Contenitore principale */}
+      <div className="p-8 md:py-4 flex-grow flex flex-col">
+        {/* Header */}
+        <h2 className="text-2xl font-bold mb-6 text-center text-purple-900">
+          Benvenuto, {user?.name}!
+        </h2>
 
-      {/* Buttons Section */}
-      
-      <div className="space-y-4">
-      <Link to="/manage-hours">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-full py-3 bg-purple-500 text-white rounded-full shadow-lg"
-        >
-          Gestisci le tue ore
-        </motion.button>
-        </Link>
-        <Link to="/manage-employer-data">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
-        >
-          Gestisci i tuoi dati
-        </motion.button>
-        </Link>
+        {/* Sezione dei bottoni */}
+        <div className="space-y-4 flex-grow">
+          <Link to="/manage-hours">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Gestisci le tue ore
+            </motion.button>
+          </Link>
+          <Link to="/manage-employer-data">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Gestisci i tuoi dati
+            </motion.button>
+          </Link>
+          <Link to="/employer-settings">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Impostazioni
+            </motion.button>
+          </Link>
 
-        <Link to="/employer-settings">
+          {/* Bottone Logout */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full py-3 bg-purple-500 text-white rounded-full shadow-lg mt-4" // Added margin-top
+            onClick={handleLogout}
+            className="w-full py-3 mt-6 bg-red-500 text-white rounded-full shadow-lg"
           >
-            Impostazioni
+            Logout
           </motion.button>
-        </Link>
-
-        {/* Logout Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleLogout}
-          className="w-full py-3 bg-red-500 text-white rounded-full shadow-lg"
-        >
-          Logout
-        </motion.button>
+        </div>
       </div>
 
-      {/* Internal Navigation Bar */}
-      <div className="mt-8 p-4 rounded-lg shadow-md bg-purple-200">
+      {/* Barra di navigazione come footer */}
+      <div className="bg-purple-200 p-4 rounded-lg shadow-md">
         <div className="flex justify-around">
           <Link to="/employer-dashboard">
             <div className="flex flex-col items-center">

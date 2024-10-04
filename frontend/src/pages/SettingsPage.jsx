@@ -8,36 +8,39 @@ const SettingsPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md w-full mx-auto mt-10 p-8 bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl border border-gray-800"
+      className="w-full md:max-w-md mx-auto bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg md:rounded-xl shadow-2xl border border-gray-800 min-h-screen md:min-h-0 flex flex-col"
     >
-      <h2 className="text-3xl font-bold mb-6 text-center text-white">
-        Impostazioni
-      </h2>
+      {/* Contenuto principale */}
+      <div className="p-8 flex-grow flex flex-col">
+        <h2 className="text-3xl font-bold mb-6 text-center text-white">
+          Impostazioni
+        </h2>
 
-      {/* Modifica Password */}
-      <Link to="/change-password">
+        {/* Modifica Password */}
+        <Link to="/change-password">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex justify-between items-center mb-4 py-3 px-4 bg-purple-500 text-white rounded-full shadow-lg"
+          >
+            <span className="text-lg font-medium">Modifica Password</span>
+            <Edit size={24} className="text-white" />
+          </motion.div>
+        </Link>
+
+        {/* Altre Impostazioni */}
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex justify-between items-center mb-4 py-3 px-4 bg-purple-500 text-white rounded-full shadow-lg"
+          className="flex justify-between items-center py-3 px-4 bg-purple-500 text-white rounded-full mb-6 shadow-lg"
         >
-          <span className="text-lg font-medium">Modifica Password</span>
+          <span className="text-lg font-medium">Altre Impostazioni</span>
           <Edit size={24} className="text-white" />
         </motion.div>
-      </Link>
+      </div>
 
-      {/* Altre Impostazioni */}
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="flex justify-between items-center py-3 px-4 bg-purple-500 text-white rounded-full shadow-lg mb-6"
-      >
-        <span className="text-lg font-medium">Altre Impostazioni</span>
-        <Edit size={24} className="text-white" />
-      </motion.div>
-
-      {/* Barra di Navigazione all'interno */}
-      <div className="mt-6 p-4 rounded-lg shadow-md bg-gray-900">
+      {/* Barra di Navigazione come footer */}
+      <div className="p-4 rounded-lg shadow-md bg-gray-900">
         <div className="flex justify-around">
           <Link to="/">
             <motion.div

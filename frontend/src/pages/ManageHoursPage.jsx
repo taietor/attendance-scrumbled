@@ -1,356 +1,331 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import NavBar from "../components/NavBar";
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  X,
-  Home,
-  User,
-  Calendar,
-  Settings,
-  Plus,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import axios from "axios"; // Importa axios per le chiamate API
-import { useAuthStore } from "../store/authStore"; // Per prendere nome e cognome dell'employer
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  addMonths,
+  subMonths,
+  getDay,
+  setYear,
+} from "date-fns";
+import { it } from "date-fns/locale";
+import { Bell } from "lucide-react";
 
 const ManageHoursPage = () => {
-  const { user } = useAuthStore();
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [weeks, setWeeks] = useState([]);
-  const [selectedWeek, setSelectedWeek] = useState(0);
-  const [justifications, setJustifications] = useState({}); // Stato per giustificativi
-  const [workDays, setWorkDays] = useState({}); // Giorni lavorativi
-  const [isJustificationModalOpen, setIsJustificationModalOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(null); // Giorno selezionato
-  const [justificationType, setJustificationType] = useState(""); // Tipo di giustificativo
-  const [justificationReason, setJustificationReason] = useState(""); // Motivazione
-  const [projects, setProjects] = useState({}); // Progetti
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false); // Modale aperto/chiuso
+  const [currentDate, setCurrentDate] = useState(new Date()); // Per la navigazione tra i mesi
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [hasNotification, setHasNotification] = useState(true); // Impostato su true per dimostrazione
+  const [showYearSelector, setShowYearSelector] = useState(false);
+  const [selectedDots, setSelectedDots] = useState({});
 
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [colorPickerDate, setColorPickerDate] = useState(null);
 
+  // Dati di esempio (da sostituire con l'API)
+  const tasks = [
+    {
+      date: new Date(2023, 4, 19), // 19 Maggio 2023
+      type: "Lavoro ordinario",
+      startTime: "9:00",
+      endTime: "13:00",
+      location: "Remoto",
+      status: "Validata",
+    },
+    {
+      date: new Date(2023, 4, 20),
+      type: "Lavoro straordinario",
+      startTime: "14:00",
+      endTime: "18:00",
+      location: "In sede",
+      status: "Non validata",
+    },
+    // Aggiungi altri dati fittizi se necessario
+  ];
 
-  const navigate = useNavigate();
+  const daysOfWeek = ["L", "M", "M", "G", "V", "S", "D"];
 
-  // Funzione per calcolare le settimane del mese selezionato
-  const calculateWeeks = (month, year) => {
-    const weeksArray = [];
-    let currentDate = new Date(year, month, 1); // Primo giorno del mese
+  // Genera i giorni per il mese corrente
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-    const firstDayOfWeek = currentDate.getDay();
-    let week = new Array(firstDayOfWeek).fill(null);
-
-    while (currentDate.getMonth() === month) {
-      if (week.length === 7) {
-        weeksArray.push(week);
-        week = [];
-      }
-      week.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    if (week.length > 0) {
-      while (week.length < 7) {
-        week.push(null);
-      }
-      weeksArray.push(week);
-    }
-
-    return weeksArray;
+  const handleDateClick = (date) => {
+    setSelectedDate(date);
+    setColorPickerDate(date);
+    setShowColorPicker(true);
   };
 
+  const handlePrevMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+
+  const handleYearClick = () => {
+    setShowYearSelector(!showYearSelector);
+  };
+
+  const handleYearChange = (year) => {
+    const newDate = setYear(currentDate, year);
+    setCurrentDate(newDate);
+    setShowYearSelector(false);
+  };
+
+  // Genera una lista di anni per il selettore
+  const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 10 + i);
+
+  // Chiudi il selettore di colore con il tasto Escape
   useEffect(() => {
-    const month = selectedMonth.getMonth();
-    const year = selectedMonth.getFullYear();
-    const weeks = calculateWeeks(month, year);
-    setWeeks(weeks);
-  }, [selectedMonth]);
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setShowColorPicker(false);
+      }
+    };
 
-  const handleWeekSelection = (index) => {
-    setSelectedWeek(index);
-  };
-  const toggleProjectModal = (day) => {
-    setSelectedDay(day);
-    setIsProjectModalOpen(true);
-  };
+    if (showColorPicker) {
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
 
-  const toggleJustificationModal = (day, type) => {
-    setSelectedDay(day);
-    setJustificationType(type);
-    setIsJustificationModalOpen(true);
-  };
-
-  const handleSaveJustification = () => {
-    if (!justificationReason || !selectedDay) return;
-
-    const dayKey = selectedDay.toDateString();
-    setJustifications((prevJustifications) => ({
-      ...prevJustifications,
-      [dayKey]: {
-        type: justificationType,
-        reason: justificationReason.slice(0, 5), // Mostra solo le prime 5 lettere
-      },
-    }));
-
-    // Chiudi il modale
-    setIsJustificationModalOpen(false);
-    setJustificationReason("");
-  };
-
-  // Array dei giorni della settimana per visualizzarli sopra le caselle
-  const daysOfWeek = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showColorPicker]);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md w-full mx-auto mt-10 p-8 bg-purple-100 rounded-xl shadow-2xl border border-purple-300"
+      className="w-full md:max-w-md mx-auto bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg md:rounded-xl shadow-2xl border border-gray-800 min-h-screen md:min-h-0 flex flex-col relative"
     >
-      {/* Header del Calendario */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-purple-900">Gestisci le tue ore</h2>
-        <button
-          onClick={() => setSelectedMonth(new Date())}
-          className="bg-purple-500 p-2 rounded-lg text-white"
-        >
-          <CalendarIcon size={22} />
-        </button>
-      </div>
-
-      {/* Selettore Mese e Anno */}
-      <div className="mb-4">
-        <DatePicker
-          selected={selectedMonth}
-          onChange={(date) => setSelectedMonth(date)}
-          dateFormat="MM/yyyy"
-          showMonthYearPicker
-          className="w-full py-2 px-4 border border-purple-300 rounded-lg"
-        />
-      </div>
-
-      {/* Settimane */}
-      <div className="flex justify-between mb-6">
-        <button
-          onClick={() => handleWeekSelection(selectedWeek - 1)}
-          disabled={selectedWeek <= 0}
-        >
-          <ChevronLeft />
-        </button>
-        <span className="text-lg font-semibold text-purple-900">
-          {`Settimana ${selectedWeek + 1}`}
-        </span>
-        <button
-          onClick={() => handleWeekSelection(selectedWeek + 1)}
-          disabled={selectedWeek >= weeks.length - 1}
-        >
-          <ChevronRight />
-        </button>
-      </div>
-
- {/* Giorni della settimana sopra le caselle */}
- <div className="grid grid-cols-7 gap-2 mb-2">
-        {daysOfWeek.map((day, index) => (
-          <div
-            key={index}
-            className="text-center font-semibold text-purple-800"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* Giorni di lavoro */}
-      <div className="grid grid-cols-7 gap-2 mb-6">
-        {weeks[selectedWeek]?.map((day, index) => (
-          <div key={index} className="flex flex-col items-center">
-            {/* Casella quadrata per giorno */}
-            <div
-              className={`p-2 bg-transparent border-4 ${
-                !day || day.getDay() === 0 // Domenica o giorno nullo
-                  ? "border-gray-500 cursor-not-allowed"
-                  : workDays[day?.toDateString()]
-                  ? "border-green-500"
-                  : "border-red-500"
-              } rounded-lg shadow-md flex items-center justify-center h-12 w-12`}
-              onClick={() => toggleWorkDay(day)}
-            >
-              {day ? (
-                <>
-                  {workDays[day.toDateString()] ? (
-                    <Check className="text-green-500" size={24} />
-                  ) : (
-                    <X className="text-red-500" size={24} />
-                  )}
-                </>
-              ) : null}
-            </div>
-
-            {day && (
-              <div className="text-sm text-center mt-2">
-                {day.getDate()}{" "}
-                <span className="text-gray-600">
-                  {day
-                    .toLocaleString("default", { month: "short" })
-                    .slice(0, 3)}
-                </span>
-              </div>
+      {/* Contenitore principale */}
+      <div className="p-4 pb-24 flex-grow flex flex-col">
+        {/* Icona delle notifiche */}
+        <div className="absolute top-4 right-4">
+          <button onClick={() => setHasNotification(!hasNotification)} className="relative">
+            <Bell size={24} className="text-white" />
+            {hasNotification && (
+              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
             )}
-          </div>
-        ))}
-      </div>
-
-      {/* Giustificativi */}
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-purple-900 mb-2">Giustificativi</h3>
-        
-        <div className="text-md font-semibold text-purple-700 mb-2">Malattia</div>
-        <div className="grid grid-cols-7 gap-2 mb-2">
-          {weeks[selectedWeek]?.map((day, index) => (
-            <div
-              key={index}
-              className="p-2 bg-transparent border-2 border-gray-400 rounded-lg h-12 w-12 flex justify-center items-center cursor-pointer"
-              onClick={() => day && toggleJustificationModal(day, "Malattia")}
-            >
-              {day && justifications[day?.toDateString()]?.type === "Malattia" ? (
-                <span className="text-xs">{justifications[day.toDateString()].reason}</span>
-              ) : (
-                <Plus size={16} />
-              )}
-            </div>
-          ))}
+          </button>
         </div>
 
-        <div className="text-md font-semibold text-purple-700 mb-2">Ferie</div>
-        <div className="grid grid-cols-7 gap-2 mb-2">
-          {weeks[selectedWeek]?.map((day, index) => (
-            <div
-              key={index}
-              className="p-2 bg-transparent border-2 border-gray-400 rounded-lg h-12 w-12 flex justify-center items-center cursor-pointer"
-              onClick={() => day && toggleJustificationModal(day, "Ferie")}
-            >
-              {day && justifications[day?.toDateString()]?.type === "Ferie" ? (
-                <span className="text-xs">{justifications[day.toDateString()].reason}</span>
-              ) : (
-                <Plus size={16} />
-              )}
-            </div>
-          ))}
+        {/* Saluto */}
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-white">Ciao, Vlad!</h1>
+          <p className="text-gray-300">
+            {format(new Date(), "EEEE, d MMMM yyyy", { locale: it })}
+          </p>
         </div>
 
-        <div className="text-md font-semibold text-purple-700 mb-2">Permessi</div>
-        <div className="grid grid-cols-7 gap-2 mb-2">
-          {weeks[selectedWeek]?.map((day, index) => (
-            <div
-              key={index}
-              className="p-2 bg-transparent border-2 border-gray-400 rounded-lg h-12 w-12 flex justify-center items-center cursor-pointer"
-              onClick={() => day && toggleJustificationModal(day, "Permessi")}
+        {/* Navigazione del calendario */}
+        <div className="flex justify-between items-center mb-2">
+          <button onClick={handlePrevMonth} className="text-white">
+            &lt; {format(subMonths(currentDate, 1), "MMM", { locale: it })}
+          </button>
+          <div className="relative">
+            <button
+              onClick={handleYearClick}
+              className="text-xl font-semibold text-white flex items-center"
             >
-              {day && justifications[day?.toDateString()]?.type === "Permessi" ? (
-                <span className="text-xs">{justifications[day.toDateString()].reason}</span>
-              ) : (
-                <Plus size={16} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-
-{/* Progetti */}
-<div className="mb-6">
-        <h3 className="text-lg font-bold text-purple-900 mb-2">Progetti</h3>
-        <div className="grid grid-cols-7 gap-2">
-          {weeks[selectedWeek]?.map((day, index) => (
-            <div
-              key={index}
-              className={`p-2 bg-transparent border-4 ${
-                !day || day.getDay() === 0
-                  ? "border-gray-500 cursor-not-allowed"
-                  : "border-blue-400"
-              } rounded-lg shadow-md flex justify-center items-center h-12 w-12`}
-              onClick={() => day && toggleProjectModal(day)}
-            >
-              {projects[day?.toDateString()]?.title ? (
-                <span className="text-xs text-center">
-                  {projects[day.toDateString()].title.slice(0, 10)}...
-                </span>
-              ) : (
-                <Plus size={16} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Modale per inserire un giustificativo */}
-      {isJustificationModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4">Inserisci Giustificativo</h3>
-            <p className="mb-4">Nome: {user.name}</p>
-            <p className="mb-4">Cognome: {user.surname}</p>
-            <textarea
-              className="w-full mb-4 p-2 border border-gray-300 rounded-lg"
-              placeholder="Inserisci la motivazione"
-              value={justificationReason}
-              onChange={(e) => setJustificationReason(e.target.value)}
-            />
-
-            <div className="flex justify-end space-x-4">
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded-lg"
-                onClick={() => setIsJustificationModalOpen(false)}
+              {format(currentDate, "MMMM yyyy", { locale: it })}
+              <svg
+                className={`w-4 h-4 ml-1 transform transition-transform duration-200 ${
+                  showYearSelector ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                Cancella
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg"
-                onClick={handleSaveJustification}
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <AnimatePresence>
+              {showYearSelector && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-gray-800 rounded shadow z-10 overflow-auto max-h-40"
+                >
+                  {years.map((year) => (
+                    <button
+                      key={year}
+                      onClick={() => handleYearChange(year)}
+                      className="block w-full text-left text-white hover:bg-gray-700 px-4 py-2"
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <button onClick={handleNextMonth} className="text-white">
+            {format(addMonths(currentDate, 1), "MMM", { locale: it })} &gt;
+          </button>
+        </div>
+
+        {/* Sezione Calendario */}
+        <div className="bg-gray-800 rounded-lg shadow-lg p-4">
+          <div className="grid grid-cols-7 text-center gap-2 text-sm text-white">
+            {/* Giorni della settimana */}
+            {daysOfWeek.map((day) => (
+              <span key={day} className="font-bold">
+                {day}
+              </span>
+            ))}
+
+            {/* Spazi vuoti per l'allineamento */}
+            {Array.from({ length: (getDay(monthStart) + 6) % 7 }).map((_, index) => (
+              <div key={index}></div>
+            ))}
+
+            {/* Date */}
+            {daysInMonth.map((date) => {
+              const isToday = isSameDay(date, new Date());
+              const isSelected = isSameDay(date, selectedDate);
+
+              // Genera una chiave coerente per la data
+              const dateKey = format(date, "yyyy-MM-dd");
+
+              // Controlla se c'è un'attività in questa data
+              const hasTask = tasks.some((task) => isSameDay(task.date, date));
+
+              // Controlla se c'è un pallino assegnato alla data
+              const dotColor = selectedDots[dateKey];
+              const dotColorClass = {
+                rosso: "bg-red-500",
+                blu: "bg-blue-500",
+                giallo: "bg-yellow-500",
+                verde: "bg-green-500",
+              }[dotColor];
+
+              return (
+                <div
+                  key={dateKey}
+                  onClick={() => handleDateClick(date)}
+                  className={`relative p-2 rounded-lg cursor-pointer ${
+                    isSelected ? "bg-purple-500 text-white" : "text-gray-200"
+                  } ${isToday ? "border border-green-500" : ""} hover:bg-purple-600`}
+                >
+                  {/* Pallini in alto a sinistra */}
+                  {dotColor && (
+                    <span
+                      className={`absolute top-1 left-1 h-2 w-2 rounded-full ${dotColorClass}`}
+                    ></span>
+                  )}
+                  {!dotColor && hasTask && (
+                    <span className="absolute top-1 left-1 h-2 w-2 bg-green-500 rounded-full"></span>
+                  )}
+                  {format(date, "d")}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Data selezionata */}
+        <h3 className="text-lg font-semibold mt-6 text-white">
+          {format(selectedDate, "EEEE, d MMMM yyyy", { locale: it })}
+        </h3>
+
+        {/* Schede delle attività */}
+        <div className="mt-4 flex-grow overflow-y-auto">
+          {tasks
+            .filter((task) => isSameDay(task.date, selectedDate))
+            .map((task, index) => (
+              <div
+                key={index}
+                className="bg-gray-800 p-4 rounded-lg shadow mb-4 flex justify-between items-center"
               >
-                Salva
+                <div>
+                  <p className="text-lg font-semibold text-white">{task.type}</p>
+                  <p className="text-sm text-gray-400">
+                    Orario: {task.startTime} - {task.endTime}
+                  </p>
+                  <p className="text-sm text-gray-400">Modalità: {task.location}</p>
+                </div>
+                <div className="flex items-center">
+                  <span
+                    className={`h-3 w-3 rounded-full mr-2 ${
+                      task.status === "Validata" ? "bg-green-500" : "bg-red-500"
+                    }`}
+                  ></span>
+                  <span
+                    className={`text-sm font-bold ${
+                      task.status === "Validata" ? "text-green-500" : "text-red-500"
+                    }`}
+                  >
+                    {task.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+          {/* Messaggio se non ci sono attività */}
+          {tasks.filter((task) => isSameDay(task.date, selectedDate)).length === 0 && (
+            <p className="text-gray-300">Nessuna attività programmata per questa data.</p>
+          )}
+        </div>
+
+        {/* Selettore di colore visivo */}
+        {showColorPicker && (
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+            onClick={() => setShowColorPicker(false)}
+          >
+            <div
+              className="bg-white p-4 rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="mb-2 text-gray-800">Seleziona un colore:</p>
+              <div className="flex space-x-4">
+                {["rosso", "blu", "giallo", "verde"].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => {
+                      const dateKey = format(colorPickerDate, "yyyy-MM-dd");
+                      setSelectedDots((prevDots) => ({
+                        ...prevDots,
+                        [dateKey]: color,
+                      }));
+                      setShowColorPicker(false);
+                    }}
+                    className={`h-8 w-8 rounded-full ${
+                      {
+                        rosso: "bg-red-500",
+                        blu: "bg-blue-500",
+                        giallo: "bg-yellow-500",
+                        verde: "bg-green-500",
+                      }[color]
+                    }`}
+                  ></button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowColorPicker(false)}
+                className="mt-4 text-sm text-gray-500 underline"
+              >
+                Annulla
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Barra di Navigazione */}
-      <div className="mt-6">
-        <div className="flex justify-between bg-purple-300 p-4 rounded-lg shadow-md">
-          <button
-            onClick={() => navigate("/employer-dashboard")}
-            className="flex flex-col items-center"
-          >
-            <Home size={24} className="text-purple-600" />
-            <span className="text-sm text-purple-700">Home</span>
-          </button>
-          <button
-            onClick={() => navigate("/manage-employer-data")}
-            className="flex flex-col items-center"
-          >
-            <User size={24} className="text-purple-600" />
-            <span className="text-sm text-purple-700">Anagrafiche</span>
-          </button>
-          <button
-            onClick={() => navigate("/timetable")}
-            className="flex flex-col items-center"
-          >
-            <Calendar size={24} className="text-purple-600" />
-            <span className="text-sm text-purple-700">Orari</span>
-          </button>
-          <button
-            onClick={() => navigate("/employer-settings")}
-            className="flex flex-col items-center"
-          >
-            <Settings size={24} className="text-purple-600" />
-            <span className="text-sm text-purple-700">Impostazioni</span>
-          </button>
-        </div>
+      {/* Barra di navigazione come footer */}
+      <div className="bg-gray-900">
+        <NavBar />
       </div>
     </motion.div>
   );

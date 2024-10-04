@@ -21,9 +21,9 @@ const LoginPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden"
+      className="w-full md:max-w-md mx-auto bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl md:rounded-2xl shadow-xl overflow-hidden min-h-screen md:min-h-0 flex flex-col justify-between"
     >
-      <div className="p-8">
+      <div className="p-8 md:py-4 flex-grow flex flex-col justify-center">
         <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text">
           Log in as administrator to access dedicated services
         </h2>
@@ -63,7 +63,7 @@ const LoginPage = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <Loader className="w-6 h-6 animate-spin  mx-auto" />
+              <Loader className="w-6 h-6 animate-spin mx-auto" />
             ) : (
               "Login"
             )}
@@ -91,4 +91,5 @@ const LoginPage = () => {
     </motion.div>
   );
 };
+
 export default LoginPage;

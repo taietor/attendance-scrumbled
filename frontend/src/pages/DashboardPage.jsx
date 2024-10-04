@@ -17,67 +17,71 @@ const DashboardPage = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-md w-full mx-auto mt-10 p-8 bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-xl shadow-2xl border border-gray-800"
+      className="w-full md:max-w-md mx-auto bg-gray-900 bg-opacity-80 backdrop-filter backdrop-blur-lg md:rounded-xl shadow-2xl border border-gray-800 min-h-screen md:min-h-0 flex flex-col"
     >
-      {/* Titolo della Dashboard */}
-      <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-600 text-transparent bg-clip-text">
-        Benvenuto, Admin!
-      </h2>
+      {/* Contenitore principale */}
+      <div className="p-8 md:py-4 flex-grow flex flex-col">
+        {/* Titolo della Dashboard */}
+        <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-600 text-transparent bg-clip-text">
+          Benvenuto, Admin!
+        </h2>
 
-      {/* Bottoni principali */}
-      <div className="space-y-6">
-        <Link to="/create-employer">
+        {/* Bottoni principali */}
+        <div className="space-y-6 flex-grow">
+          <Link to="/create-employer">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Crea un nuovo utente
+            </motion.button>
+          </Link>
+
+          <Link to="/timetable">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Tabelle orarie
+            </motion.button>
+          </Link>
+
+          <Link to="/anagrafiche">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Vai ad Anagrafiche
+            </motion.button>
+          </Link>
+
+          <Link to="/settings">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
+            >
+              Impostazioni
+            </motion.button>
+          </Link>
+
+          {/* Bottone Logout */}
           <motion.button
+            onClick={handleLogout}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full py-3 bg-purple-500 text-white rounded-full shadow-lg"
+            className="w-full py-3 mt-6 bg-red-500 text-white rounded-full shadow-lg"
           >
-            Crea un nuovo utente
+            Logout
           </motion.button>
-        </Link>
-
-        <Link to="/timetable">
-          {" "}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
-          >
-            Tabelle orarie
-          </motion.button>
-        </Link>
-
-        <Link to="/anagrafiche">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
-          >
-            Vai ad Anagrafiche
-          </motion.button>
-        </Link>
-
-        <Link to="/settings">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 mt-6 bg-purple-500 text-white rounded-full shadow-lg"
-          >
-            Impostazioni
-          </motion.button>
-        </Link>
+        </div>
       </div>
 
-      {/* Bottone Logout */}
-      <motion.button
-        onClick={handleLogout}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="w-full py-3 mt-8 bg-red-500 text-white rounded-full shadow-lg"
-      >
-        Logout
-      </motion.button>
-      <nav className="bg-gray-900 p-4 mt-8 shadow-lg flex justify-between rounded-lg">
+      {/* Barra di navigazione come footer */}
+      <nav className="bg-gray-900 p-4 shadow-lg flex justify-between rounded-lg">
         <Link
           to="/"
           className="flex flex-col items-center text-white hover:text-gray-400"
