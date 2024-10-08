@@ -23,7 +23,9 @@
 		"jsonwebtoken": "^9.0.2",
 		"mailtrap": "^3.4.0",
 		"mongoose": "^8.5.2",
-		"react-datepicker": "^7.3.0"
+		"react-datepicker": "^7.3.0",
+		"react-modal": "^3.16.1",
+		"recharts": "^2.12.7"
 	},
 	"devDependencies": {
 		"cross-env": "^7.0.3",
